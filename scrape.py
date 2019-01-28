@@ -6,15 +6,19 @@ import pytesseract
 
 OUTPUT_FOLDER_DEFAULT = "./pdf_output"
 
-def ocr(pdffile,ocr_dir,img_dir):
-    images = pdf2image.convert_from_path(pdffile,output_folder=img_dir)
+def ocr(pdffile,dirs):
+    images = pdf2image.convert_from_path(pdffile,output_folder=dirs['img_dir'])
     text = ""
     for image in images:
         text += (pytesseract.image_to_string(image,lang='eng'))
         text += ('\n\n')
-    txtfile = ocr_dir+'/'+((pdffile.split('/')[-1]).split('.')[0] + '.txt')
-    with open(txtfile,'w') as txt:
-        txt.write(text)
+
+    if 'Public Comment Form' in text:
+        subprocess.run(['mv',pdffile,dirs['forms']])
+    else:
+        txtfile = dirs['ocr_dir']+'/'+((pdffile.split('/')[-1]).split('.')[0] + '.txt')
+        with open(txtfile,'w') as txt:
+            txt.write(text)
 
 def scrape(pdffile,scraped,noscrape):
     if pdffile[-4:] != '.pdf': return
@@ -45,29 +49,30 @@ def init_argparser():
     return parser
 
 def init_dirs(output_dir):
-    scraped = output_dir + '/scraped'
-    noscrape = output_dir + '/noscrape'
-    ocr_dir = output_dir + '/ocr'
-    img_dir = output_dir + '/img'
+    dirs = {}
+    dirs['scraped'] = output_dir + '/scraped'
+    dirs['noscrape'] = output_dir + '/noscrape'
+    dirs['ocr_dir'] = output_dir + '/ocr'
+    dirs['img_dir'] = output_dir + '/img'
+    dirs['forms'] = output_dir + '/forms'
+
     subprocess.run(['mkdir',output_dir])
-    subprocess.run(['mkdir',scraped])
-    subprocess.run(['mkdir',noscrape])
-    subprocess.run(['mkdir',ocr_dir])
-    subprocess.run(['mkdir',img_dir])
-    return scraped,noscrape,ocr_dir,img_dir
+    for dir in dirs.values():
+        subprocess.run(['mkdir',dir])
+    return dirs
 
 if __name__ == "__main__":
     parser = init_argparser()
     args = parser.parse_args()
     print(args)
     output = args.o.strip('/') if args.o else OUTPUT_FOLDER_DEFAULT
-    scraped,noscrape,ocr_dir,img_dir = init_dirs(output)
+    dirs = init_dirs(output)
 
     if args.r:
         for pdf in get_pdfs(args.target):
-            if pdf: scrape(pdf,scraped,noscrape)
+            if pdf: scrape(pdf,dirs['scraped'],dirs['noscrape'])
         else:
-            scrape(args.target,scraped,noscrape)
+            scrape(args.target,dirs['scraped'],dirs['noscrape'])
 
-    for pdf in get_pdfs(noscrape):
-        ocr(pdf,ocr_dir,img_dir)
+    for pdf in get_pdfs(dirs['noscrape']):
+        ocr(pdf,dirs)

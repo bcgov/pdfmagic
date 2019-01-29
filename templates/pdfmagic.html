@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<title>PDF MAGIC</title>
+<h1>PDF MAGIC: Upload Files</h1>
+<form method=post enctype="multipart/form-data">
+    <input type=file name="file[]" multiple/>
+    <input type=submit value=Upload />
+</form>
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <ul class=flashes>
+    {% for message in messages %}
+      <li>{{ message }}</li>
+    {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
+{% block body %}{% endblock %}

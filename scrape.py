@@ -20,7 +20,7 @@ def ocr(pdffile,dirs):
         with open(txtfile,'w') as txt:
             txt.write(text)
 
-def scrape(pdffile,scraped,noscrape):
+def scrape(pdffile,dirs):
     if pdffile[-4:] != '.pdf': return
     good = False
     subprocess.run(['pdftotext',pdffile])
@@ -31,9 +31,9 @@ def scrape(pdffile,scraped,noscrape):
         if txt.read().strip():
             good = True
     if good: 
-        subprocess.run(['mv',txtfile,scraped])
+        subprocess.run(['mv',txtfile,dirs['scraped']])
     else:
-        subprocess.run(['cp',pdffile,noscrape])
+        subprocess.run(['cp',pdffile,dirs['noscrape']])
         subprocess.run(['rm',txtfile])
 
 def get_pdfs(target):
@@ -45,7 +45,7 @@ def init_argparser():
     parser = argparse.ArgumentParser(description="Scrapes scrapable pdfs and OCRs those that are not, separating the two.")
     parser.add_argument('target')
     parser.add_argument('-o')
-    parser.add_argument('-r',action='store_true')
+    parser.add_argument('-b','--batch',action='store_true')
     return parser
 
 def init_dirs(output_dir):
@@ -68,11 +68,11 @@ if __name__ == "__main__":
     output = args.o.strip('/') if args.o else OUTPUT_FOLDER_DEFAULT
     dirs = init_dirs(output)
 
-    if args.r:
+    if args.batch:
         for pdf in get_pdfs(args.target):
-            if pdf: scrape(pdf,dirs['scraped'],dirs['noscrape'])
+            if pdf: scrape(pdf,dirs)
         else:
-            scrape(args.target,dirs['scraped'],dirs['noscrape'])
+            scrape(args.target,dirs)
 
     for pdf in get_pdfs(dirs['noscrape']):
         ocr(pdf,dirs)

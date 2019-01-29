@@ -3,6 +3,8 @@ import os
 import sys
 from werkzeug.utils import secure_filename
 
+import scrape
+
 UPLOAD_FOLDER = './pdf_upload'
 ALLOWED_EXTENSIONS = set(['pdf'])
 
@@ -14,6 +16,8 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.',1)[1].lower() in ALLOWED_EXTENSIONS
 
+def batch_scrape():
+    scrape.run(app.config['UPLOAD_FOLDER'],batch=True)
 
 @app.route('/',methods=['GET','POST'])
 def uploader():
@@ -35,7 +39,9 @@ def uploader():
                 filename = secure_filename(_file.filename)
                 _file.save(os.path.join(app.config['UPLOAD_FOLDER'],filename))
                 upcount += 1
-                flask.flash(f'FILES UPLOADED: {upcount}')
             else:
                 flask.flash('FILE NOT ALLOWED: {_file.filename}')
+            flask.render_template('pdfmagic.html')
+        flask.flash(f'FILES UPLOADED: {upcount}')
+        batch_scrape()
     return flask.render_template('pdfmagic.html')

@@ -4,7 +4,7 @@ import glob
 import pdf2image
 import pytesseract
 
-OUTPUT_FOLDER_DEFAULT = "./pdf_output"
+OUTPUT_FOLDER_DEFAULT = "pdf_output"
 
 def ocr(pdffile,dirs):
     images = pdf2image.convert_from_path(pdffile,output_folder=dirs['img_dir'])
@@ -44,11 +44,13 @@ def get_pdfs(target):
 def init_argparser():
     parser = argparse.ArgumentParser(description="Scrapes scrapable pdfs and OCRs those that are not, separating the two.")
     parser.add_argument('target')
-    parser.add_argument('-o')
+    parser.add_argument('-o','--output')
     parser.add_argument('-b','--batch',action='store_true')
     return parser
 
 def init_dirs(output_dir):
+    output_dir = output_dir.strip()
+    # print(f'|{output_dir}|')
     dirs = {}
     dirs['scraped'] = output_dir + '/scraped'
     dirs['noscrape'] = output_dir + '/noscrape'
@@ -61,11 +63,8 @@ def init_dirs(output_dir):
         subprocess.run(['mkdir',dir])
     return dirs
 
-if __name__ == "__main__":
-    parser = init_argparser()
-    args = parser.parse_args()
-    print(args)
-    output = args.o.strip('/') if args.o else OUTPUT_FOLDER_DEFAULT
+def start(args):
+    output = args.output.strip('/') if args.output else OUTPUT_FOLDER_DEFAULT
     dirs = init_dirs(output)
 
     if args.batch:
@@ -76,3 +75,19 @@ if __name__ == "__main__":
 
     for pdf in get_pdfs(dirs['noscrape']):
         ocr(pdf,dirs)
+
+def run(target,batch=False,output=OUTPUT_FOLDER_DEFAULT):
+    parser = init_argparser()
+    if batch: 
+        args = parser.parse_args([target,'-b',f'-o {output}'])
+    else:
+        args = parser.parse_args([target,f'-o {output}'])
+    
+    start(args)
+
+if __name__ == "__main__":
+    parser = init_argparser()
+    args = parser.parse_args()
+    # print(args)
+    start(args)
+    

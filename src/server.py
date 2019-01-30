@@ -25,19 +25,27 @@ app.config['SCRAPE_OUTPUT_FOLDER'] = SCRAPE_OUTPUT_FOLDER
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.',1)[1].lower() in ALLOWED_EXTENSIONS
 
+### todo: create a single upload workflow
+### Run the scraper on a folder
+### sid is used to uniquely identify this session's files
 def batch_scrape(sid):
     scrape.run(os.path.join(app.config['UPLOAD_FOLDER'],sid),batch=True,output=os.path.join(app.config['SCRAPE_OUTPUT_FOLDER'],sid))
     print("DONE",file=sys.stderr)
 
 ### zip the output dir of the scraper
+### sid is used to uniquely identify this session's files
 def zip_files(sid):
     #tstamp = '-'.join('_'.join(str(dt.now()).split(' ')).split(':')).split('.')[0]
     path = os.path.join(app.config['SCRAPE_OUTPUT_FOLDER'],sid)
     shutil.make_archive(path,'zip',path)
 
+### Generate a random session id string
 def generate_sid():
     return base64.b64encode(os.urandom(24)).decode().replace('/','0')
 
+
+### Main route, displays upload page on GET
+### Handles .pdf upload on POST
 @app.route('/',methods=['GET','POST'])
 def uploader():
     req = flask.request
@@ -79,10 +87,12 @@ def uploader():
 
     return flask.render_template('pdfmagic.html')
 
+### User can download output zip with a GET
 @app.route('/download/')
 def download():
     try:
         sid = flask.session['sid']
-        return flask.send_file(os.path.join(app.config['SCRAPE_OUTPUT_FOLDER'],f'{sid}.zip'))
+        tstamp = '-'.join('_'.join(str(dt.now()).split(' ')).split(':')).split('.')[0]
+        return flask.send_file(os.path.join(app.config['SCRAPE_OUTPUT_FOLDER'],f'{sid}.zip'),as_attachment=True,attachment_filename=f'pdfmagic-{tstamp}.zip')
     except Exception as e:
         flask.flash(str(e))

@@ -7,6 +7,7 @@ import pytesseract
 OUTPUT_FOLDER_DEFAULT = "pdf_output"
 
 #todo: make this more cross-platform?
+#todo: make the single-upload experience better
 
 ### Extract text from a pdf file using Tesseract OCR
 def ocr(pdffile,dirs):

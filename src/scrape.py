@@ -103,9 +103,9 @@ def start(args):
 def run(target,batch=False,output=OUTPUT_FOLDER_DEFAULT):
     parser = init_argparser()
     if batch: 
-        args = parser.parse_args([target,'-b',f'-o {output}'])
+        args = parser.parse_args([target,'-b','-o '+output])
     else:
-        args = parser.parse_args([target,f'-o {output}'])
+        args = parser.parse_args([target,'-o '+output])
     
     start(args)
 

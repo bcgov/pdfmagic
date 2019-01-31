@@ -9,8 +9,8 @@ import base64
 
 import scrape
 
-UPLOAD_FOLDER = './pdf_upload'
-SCRAPE_OUTPUT_FOLDER = './pdf_output'
+UPLOAD_FOLDER = '/Users/blwakila/pdf_extract/pdf_upload'
+SCRAPE_OUTPUT_FOLDER = '/Users/blwakila/pdf_extract/'
 ALLOWED_EXTENSIONS = set(['pdf'])
 SID_SIZE = 30
 
@@ -77,7 +77,7 @@ def uploader():
             else:
                 flask.flash('FILE NOT ALLOWED: {_file.filename}')
             flask.render_template('pdfmagic.html')
-        flask.flash(f'FILES UPLOADED: {upcount}')
+        flask.flash('FILES UPLOADED: '+str(upcount))
 
         #run the scraper
         batch_scrape(sid)
@@ -93,6 +93,13 @@ def download():
     try:
         sid = flask.session['sid']
         tstamp = '-'.join('_'.join(str(dt.now()).split(' ')).split(':')).split('.')[0]
-        return flask.send_file(os.path.join(app.config['SCRAPE_OUTPUT_FOLDER'],f'{sid}.zip'),as_attachment=True,attachment_filename=f'pdfmagic-{tstamp}.zip')
+        return flask.send_file(os.path.join(app.config['SCRAPE_OUTPUT_FOLDER'],sid+'.zip'),as_attachment=True,attachment_filename='pdfmagic-{}.zip'.format(tstamp))
     except Exception as e:
-        flask.flash(str(e))
+        return str(e)
+
+
+if __name__ == '__main__':
+    app.run(
+        debug=False,
+        port=8080
+    )

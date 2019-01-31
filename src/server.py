@@ -9,16 +9,14 @@ import base64
 
 import scrape
 
-UPLOAD_FOLDER = '/Users/blwakila/pdf_extract/pdf_upload'
-SCRAPE_OUTPUT_FOLDER = '/Users/blwakila/pdf_extract/'
 ALLOWED_EXTENSIONS = set(['pdf'])
 SID_SIZE = 30
 
 
 app = flask.Flask(__name__)
 app.secret_key = os.urandom(24)
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['SCRAPE_OUTPUT_FOLDER'] = SCRAPE_OUTPUT_FOLDER
+
+app.config.from_envvar('PDFMAGIC_CONFIG')
 
 ### Returns a boolean value
 ### whether the filename has an allowed extension or not

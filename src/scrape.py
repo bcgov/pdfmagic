@@ -88,11 +88,14 @@ def start(args):
     if args.batch:
         for pdf in get_pdfs(args.target):
             if pdf: scrape(pdf,dirs)
-        else:
-            scrape(args.target,dirs)
+    else:
+        scrape(args.target,dirs)
+
 
     for pdf in get_pdfs(dirs['noscrape']):
-        ocr(pdf,dirs)
+            ocr(pdf,dirs) 
+
+    
     
     #remove temp dirs
     subprocess.run(['rm','-r',dirs['noscrape']])

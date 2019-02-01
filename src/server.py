@@ -6,6 +6,7 @@ import shutil
 from datetime import datetime as dt
 import string
 import base64
+import glob
 
 import scrape
 
@@ -23,11 +24,16 @@ app.config.from_envvar('PDFMAGIC_CONFIG')
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.',1)[1].lower() in ALLOWED_EXTENSIONS
 
-### todo: create a single upload workflow
+### todo: create a workflow for single upload
 ### Run the scraper on a folder
 ### sid is used to uniquely identify this session's files
 def batch_scrape(sid):
     scrape.run(os.path.join(app.config['UPLOAD_FOLDER'],sid),batch=True,output=os.path.join(app.config['SCRAPE_OUTPUT_FOLDER'],sid))
+    zip_files(sid)
+    print("BATCH DONE",file=sys.stderr)
+
+def single_scrape(sid):
+    scrape.run(os.path.join(os.path.join(app.config['UPLOAD_FOLDER'],sid,flask.session['filename'])),batch=False,output=os.path.join(app.config['SCRAPE_OUTPUT_FOLDER'],sid))
     print("DONE",file=sys.stderr)
 
 ### zip the output dir of the scraper
@@ -41,6 +47,19 @@ def zip_files(sid):
 def generate_sid():
     return base64.b64encode(os.urandom(24)).decode().replace('/','0')
 
+### Save a file to disk if it matches allowed filetypes
+### return false if file not allowed, true otherwise
+def save_file(_file,upload_folder):
+    if allowed_file(_file.filename):
+        filename = secure_filename(_file.filename)
+        filepath = os.path.join(upload_folder,filename)
+        _file.save(filepath)
+        if not flask.session['batch']: flask.session['filename'] = filename
+        return True
+    else:
+        flask.flash('FILE NOT ALLOWED: {_file.filename}')
+        return False
+    
 
 ### Main route, displays upload page on GET
 ### Handles .pdf upload on POST
@@ -61,25 +80,24 @@ def uploader():
         print("FILES",file=sys.stderr)
         print(uploaded_files,file=sys.stderr)
 
-        upcount = 0
+        # is a batch job if there is more than one file
+        flask.session['batch'] = len(uploaded_files) > 1
+        
 
         # process filenames, and save files
         upload_folder = os.path.join(app.config['UPLOAD_FOLDER'],sid)
         os.mkdir(upload_folder)
         for _file in uploaded_files:
             if not _file: continue
-            if allowed_file(_file.filename):
-                filename = secure_filename(_file.filename)
-                _file.save(os.path.join(upload_folder,filename))
-                upcount += 1
-            else:
-                flask.flash('FILE NOT ALLOWED: {_file.filename}')
+            save_file(_file,upload_folder)
             flask.render_template('pdfmagic.html')
-        flask.flash('FILES UPLOADED: '+str(upcount))
 
         #run the scraper
-        batch_scrape(sid)
-        zip_files(sid)
+        if flask.session['batch']:
+            batch_scrape(sid)
+        else:
+            single_scrape(sid)
+        
     
         return flask.render_template('downloads.html')
 
@@ -91,7 +109,14 @@ def download():
     try:
         sid = flask.session['sid']
         tstamp = '-'.join('_'.join(str(dt.now()).split(' ')).split(':')).split('.')[0]
-        return flask.send_file(os.path.join(app.config['SCRAPE_OUTPUT_FOLDER'],sid+'.zip'),as_attachment=True,attachment_filename='pdfmagic-{}.zip'.format(tstamp))
+        if flask.session['batch']:
+            return flask.send_file(os.path.join(app.config['SCRAPE_OUTPUT_FOLDER'],sid+'.zip'),as_attachment=True,attachment_filename='pdfmagic-{}.zip'.format(tstamp))
+        else:
+            try:
+                txtfile = glob.glob(os.path.join(app.config['SCRAPE_OUTPUT_FOLDER'],sid,'*','*.txt'))[0]
+                return flask.send_file(txtfile,as_attachment=True,attachment_filename=flask.session['filename'][:-3]+'.txt')
+            except Exception as e:
+                return str(e)
     except Exception as e:
         return str(e)
 

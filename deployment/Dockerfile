@@ -55,6 +55,7 @@ RUN ln -s /usr/local/bin/docker-entrypoint.sh / && \
     chgrp -R 0 /usr/local/bin/docker-entrypoint.sh && \
     chown -R nginx:root /usr/local/bin/docker-entrypoint.sh
 
+# go to link below and search for "Support Arbitrary User IDs"
 # https://docs.openshift.com/container-platform/3.3/creating_images/guidelines.html
 RUN chgrp -R 0 /var/log /var/cache /run/pid /spool/nginx /var/run /run /tmp /etc/uwsgi /etc/nginx /pdfmagic && \
     chmod -R g+rwX /var/log /var/cache /run/pid /spool/nginx /var/run /run /tmp /etc/uwsgi /etc/nginx /pdfmagic && \

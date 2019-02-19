@@ -1,10 +1,10 @@
 FROM python:3.7
 
 RUN apt-get update -y && \
-    apt-get install -y uwsgi procps libpcre3 libpcre3-dev&&\
+    apt-get install -y procps libpcre3 libpcre3-dev&&\
     apt-get install -y poppler-utils tesseract-ocr 
 
-RUN pip install uwsgi pipenv
+RUN pip install pipenv
 
 RUN mkdir -p /pdfmagic
 COPY ./src pdfmagic/src

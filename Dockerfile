@@ -23,8 +23,8 @@ ENV PDFMAGIC_CONFIG /pdfmagic/src/pdfmagic.cfg
 ENV WEB_CONCURRENCY 10
 
 
-EXPOSE 8000
+EXPOSE 5000
 
 # enter
-CMD [ "gunicorn","app:app" ]
+CMD [ "gunicorn","-b","localhost:5000","app:app" ]
 

@@ -26,5 +26,5 @@ ENV WEB_CONCURRENCY 10
 EXPOSE 5000
 
 # enter
-CMD [ "gunicorn","-b","localhost:5000","app:app" ]
+CMD [ "gunicorn","-b","127.0.0.1:5000","app:app" ]
 

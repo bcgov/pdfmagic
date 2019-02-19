@@ -19,8 +19,8 @@ RUN pipenv install --system --deploy --ignore-pipfile
 
 # set up app config
 RUN mkdir -p /pdfmagic/uploads /pdfmagic/output
-RUN chgrp -R 0 /pdfmagic/uploads && chmod -R g+rwx /pfmagic/uploads
-RUN chgrp -R 0 /pdfmagic/output && chmod -R g+rwx /pfmagic/output
+RUN chgrp -R 0 /pdfmagic/uploads && chmod -R g+rwx /pdfmagic/uploads
+RUN chgrp -R 0 /pdfmagic/output && chmod -R g+rwx /pdfmagic/output
 
 
 ENV PDFMAGIC_CONFIG /pdfmagic/src/pdfmagic.cfg

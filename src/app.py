@@ -15,7 +15,8 @@ SID_SIZE = 30
 
 
 app = flask.Flask(__name__)
-app.secret_key = os.urandom(24)
+app.secret_key = os.environ['FLASK_SECRET_KEY']
+
 
 app.config.from_envvar('PDFMAGIC_CONFIG')
 

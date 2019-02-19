@@ -20,10 +20,11 @@ RUN pipenv install --system --deploy --ignore-pipfile
 # set up app config
 RUN mkdir -p /pdfmagic/uploads /pdfmagic/output
 ENV PDFMAGIC_CONFIG /pdfmagic/src/pdfmagic.cfg
+ENV WEB_CONCURRENCY 10
 
 
 EXPOSE 5000
 
 # enter
-CMD [ "python","server.py" ]
+CMD [ "gunicorn","app" ]
 

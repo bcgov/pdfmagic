@@ -11,6 +11,7 @@ pillow = "*"
 pytesseract = "*"
 pdf2image = "*"
 flask = "*"
+gunicorn = "*"
 
 [requires]
 python_version = "3.7"

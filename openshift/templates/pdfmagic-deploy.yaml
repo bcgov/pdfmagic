@@ -59,11 +59,23 @@ objects:
           resources: {}
           terminationMessagePath: /dev/termination-log
           terminationMessagePolicy: File
+          volumeMounts:
+          - name: ${PVC_1_NAME}
+            mountPath: ${PVC_1_MOUNT_PATH}
+          - name: ${PVC_2_NAME}
+            mountPath: ${PVC_2_MOUNT_PATH}
         dnsPolicy: ClusterFirst
         restartPolicy: Always
         schedulerName: default-scheduler
         securityContext: {}
         terminationGracePeriodSeconds: 30
+        volumes:
+        - name: ${PVC_1_NAME}
+          persistentVolumeClaim:
+            claimName: ${PVC_1_NAME}
+        - name: ${PVC_2_NAME}
+          persistentVolumeClaim:
+            claimName: ${PVC_2_NAME}
     test: false
     triggers:
     - type: ConfigChange
@@ -76,6 +88,7 @@ objects:
           name: ${APP_NAME}:latest
           namespace: ${IMAGE_NAMESPACE}
       type: ImageChange
+    
 - kind: Secret
   type: Opaque
   apiVersion: v1
@@ -84,7 +97,26 @@ objects:
   metadata:
     name: flask-secret-key
     namespace: ${PROJECT_NAMESPACE}
-
+- kind: PersistentVolumeClaim
+  apiVersion: v1
+  metadata:
+    name: ${PVC_1_NAME}
+  spec:
+    accessModes:
+      - ReadWriteMany
+    resources:
+      requests:
+        storage: ${PVC_CAPACITY}
+- kind: PersistentVolumeClaim
+  apiVersion: v1
+  metadata:
+    name: ${PVC_2_NAME}
+  spec:
+    accessModes:
+      - ReadWriteMany
+    resources:
+      requests:
+        storage: ${PVC_CAPACITY}
 parameters:
 - name: APP_NAME
   description: The name of the application
@@ -102,5 +134,25 @@ parameters:
   description: secret key used to sign flask sessions
   generate: expression
   from: "[a-zA-Z0-9]{128}"
+  required: true
+- name: PVC_1_NAME
+  description: Name of persistent volume claim
+  value: pdfmagic-uploads
+  required: true
+- name: PVC_2_NAME
+  description: Name of persistent volume claim
+  value: pdfmagic-output
+  required: true
+- name: PVC_1_MOUNT_PATH
+  description: Where the PVC will be mounted inside container
+  value: "/pdfmagic/uploads"
+  required: true
+- name: PVC_2_MOUNT_PATH
+  description: Where the PVC will be mounted inside container
+  value: "/pdfmagic/output"
+  required: true
+- name: PVC_CAPACITY
+  description: size of storage allocated to PVC
+  value: 1Gi
   required: true
   

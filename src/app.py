@@ -99,8 +99,8 @@ def uploader():
         else:
             single_scrape(sid)
         
-        if req.form['no_html']:
-            return req.base_url + '/download/'
+        if  'no_html' in req.form:
+            return req.base_url + 'download/'
             
         return flask.render_template('downloads.html')
 

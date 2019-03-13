@@ -99,7 +99,9 @@ def uploader():
         else:
             single_scrape(sid)
         
-    
+        if req.form['no_html']:
+            return req.base_url + '/download/'
+            
         return flask.render_template('downloads.html')
 
     return flask.render_template('pdfmagic.html')

@@ -66,7 +66,7 @@ def save_file(_file,upload_folder):
 
 ### Main route, displays upload page on GET
 ### Handles .pdf upload on POST
-@app.route('/',methods=['GET','POST'])
+@app.route('/upload/',methods=['GET','POST'])
 def uploader():
     req = flask.request
 
@@ -98,7 +98,7 @@ def uploader():
         process_upload.delay(dict(flask.session))
         
         if  'no_html' in req.form:
-            return req.base_url + 'download/'
+            return req.host_url + 'download/'
             
         return flask.render_template('downloads.html')
 
@@ -124,6 +124,8 @@ def download():
         else:
             txtfile = glob.glob(os.path.join(app.config['SCRAPE_OUTPUT_FOLDER'],sid,'*','*.txt'))[0]
             return flask.send_file(txtfile,as_attachment=True,attachment_filename=flask.session['filename'][:-3]+'.txt')
+    except IndexError:
+        return "PDFMAGIC_ERROR: This item is not currently available"
     except Exception as e:
         return str(e)
 

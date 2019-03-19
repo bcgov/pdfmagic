@@ -7,9 +7,9 @@ from datetime import datetime as dt
 import string
 import base64
 import glob
+from celery import Celery
 
 import scrape
-
 ALLOWED_EXTENSIONS = set(['pdf'])
 SID_SIZE = 30
 
@@ -19,22 +19,24 @@ app.secret_key = os.environ['FLASK_SECRET_KEY']
 
 
 app.config.from_envvar('PDFMAGIC_CONFIG')
+celery = Celery(app.name,broker=app.config['CELERY_BROKER_URL'])
+celery.conf.update(app.config)
 
 ### Returns a boolean value
 ### whether the filename has an allowed extension or not
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.',1)[1].lower() in ALLOWED_EXTENSIONS
 
-### todo: create a workflow for single upload
+### todo: remove batch upload stuff
 ### Run the scraper on a folder
 ### sid is used to uniquely identify this session's files
-def batch_scrape(sid):
-    scrape.run(os.path.join(app.config['UPLOAD_FOLDER'],sid),batch=True,output=os.path.join(app.config['SCRAPE_OUTPUT_FOLDER'],sid))
-    zip_files(sid)
+def batch_scrape(session):
+    scrape.run(os.path.join(app.config['UPLOAD_FOLDER'],session['sid']),batch=True,output=os.path.join(app.config['SCRAPE_OUTPUT_FOLDER'],session['sid']))
+    zip_files(session['sid'])
     print("BATCH DONE",file=sys.stderr)
 
-def single_scrape(sid):
-    scrape.run(os.path.join(os.path.join(app.config['UPLOAD_FOLDER'],sid,flask.session['filename'])),batch=False,output=os.path.join(app.config['SCRAPE_OUTPUT_FOLDER'],sid))
+def single_scrape(session):
+    scrape.run(os.path.join(os.path.join(app.config['UPLOAD_FOLDER'],session['sid'],session['filename'])),batch=False,output=os.path.join(app.config['SCRAPE_OUTPUT_FOLDER'],session['sid']))
     print("DONE",file=sys.stderr)
 
 ### zip the output dir of the scraper
@@ -84,20 +86,16 @@ def uploader():
         # is a batch job if there is more than one file
         flask.session['batch'] = len(uploaded_files) > 1
         
-
         # process filenames, and save files
         upload_folder = os.path.join(app.config['UPLOAD_FOLDER'],sid)
         os.mkdir(upload_folder)
         for _file in uploaded_files:
             if not _file: continue
             save_file(_file,upload_folder)
-            flask.render_template('pdfmagic.html')
+            # flask.render_template('pdfmagic.html')
 
-        #run the scraper
-        if flask.session['batch']:
-            batch_scrape(sid)
-        else:
-            single_scrape(sid)
+        # .delay() is the celery way to call a task
+        process_upload.delay(dict(flask.session))
         
         if  'no_html' in req.form:
             return req.base_url + 'download/'
@@ -106,7 +104,16 @@ def uploader():
 
     return flask.render_template('pdfmagic.html')
 
-### User can download output zip with a GET
+@celery.task
+def process_upload(session):
+    print("START PROCESSING",file=sys.stderr)
+    #run the scraper
+    if session['batch']:
+        batch_scrape(session)
+    else:
+        single_scrape(session)
+
+### User can download output with a GET
 @app.route('/download/')
 def download():
     try:
@@ -115,11 +122,8 @@ def download():
         if flask.session['batch']:
             return flask.send_file(os.path.join(app.config['SCRAPE_OUTPUT_FOLDER'],sid+'.zip'),as_attachment=True,attachment_filename='pdfmagic-{}.zip'.format(tstamp))
         else:
-            try:
-                txtfile = glob.glob(os.path.join(app.config['SCRAPE_OUTPUT_FOLDER'],sid,'*','*.txt'))[0]
-                return flask.send_file(txtfile,as_attachment=True,attachment_filename=flask.session['filename'][:-3]+'.txt')
-            except Exception as e:
-                return str(e)
+            txtfile = glob.glob(os.path.join(app.config['SCRAPE_OUTPUT_FOLDER'],sid,'*','*.txt'))[0]
+            return flask.send_file(txtfile,as_attachment=True,attachment_filename=flask.session['filename'][:-3]+'.txt')
     except Exception as e:
         return str(e)
 

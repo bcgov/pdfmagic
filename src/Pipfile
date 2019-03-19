@@ -12,6 +12,7 @@ pytesseract = "*"
 pdf2image = "*"
 flask = "*"
 gunicorn = "*"
+celery = "*"
 
 [requires]
 python_version = "3.7"

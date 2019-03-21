@@ -6,6 +6,7 @@ Unfortunately this probably will not run on windows right now.
 
 Dependencies:
 (these should all be in your PATH)
+
 Brew and Apt packages listed for convenience, follow the links for installation instructions on your system.
 
  - Python 3.7

@@ -126,8 +126,11 @@ def process_upload(session):
 
 @app.route('/retrieve-keywords/')
 def retrieve_keywords():
-    txtfile = glob.glob(os.path.join(app.config['SCRAPE_OUTPUT_FOLDER'],flask.session['sid'],'*','*.txt'))[0]
-    results = extract_keywords(txtfile,dict(flask.session))
+    try:
+        txtfile = glob.glob(os.path.join(app.config['SCRAPE_OUTPUT_FOLDER'],flask.session['sid'],'*','*.txt'))[0]
+        results = extract_keywords(txtfile,dict(flask.session))
+    except Exception as e:
+        return "PDFMAGIC_ERROR: This item is not currently available"
     return flask.jsonify(results)
 
 ### User can download output with a GET

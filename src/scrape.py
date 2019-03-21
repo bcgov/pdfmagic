@@ -3,14 +3,15 @@ import subprocess
 import glob
 import pdf2image
 import pytesseract
+import os
 
 OUTPUT_FOLDER_DEFAULT = "pdf_output"
 
 #todo: make this more cross-platform?
-#todo: make the single-upload experience better
 
 ### Extract text from a pdf file using Tesseract OCR
 def ocr(pdffile,dirs):
+    txtfile = dirs['ocr_dir']+'/'+((pdffile.split('/')[-1]).split('.')[0] + '.txt.tmp')
     # convert pdfs to images
     images = pdf2image.convert_from_path(pdffile,output_folder=dirs['img_dir'])
     text = ""
@@ -20,9 +21,9 @@ def ocr(pdffile,dirs):
         text += ('\n\n')
 
         # save text file
-        txtfile = dirs['ocr_dir']+'/'+((pdffile.split('/')[-1]).split('.')[0] + '.txt')
         with open(txtfile,'w') as txt:
             txt.write(text)
+    os.rename(txtfile,txtfile[:-4])
 
 ### Scrape text from a pdf using pdftotext from Poppler
 def scrape(pdffile,dirs):
@@ -84,7 +85,10 @@ def start(args):
 
     if args.batch:
         for pdf in get_pdfs(args.target):
-            if pdf: scrape(pdf,dirs)
+            if pdf: 
+                scrape(pdf,dirs)
+                os.remove(pdf)
+
     else:
         scrape(args.target,dirs)
 

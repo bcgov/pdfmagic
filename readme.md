@@ -5,17 +5,24 @@ A common service deployable project to handle conversion of PDF documents to tex
 Dependencies:
 (these should all be in your PATH)
  - Python 3.7
- - [RabbitMQ](https://www.rabbitmq.com/download.html)
- ..- `brew install rabbitmq`
- ..- `sudo apt install rabbitmq-server`
+ - [RabbitMQ](https://www.rabbitmq.com/download.html) 
+ 
+ `brew install rabbitmq`
+ 
+ `sudo apt install rabbitmq-server`
  - [Poppler](https://poppler.freedesktop.org/)
- ..- `brew install poppler`
- ..- `sudo apt install poppler-utils`
+ 
+ `brew install poppler`
+ 
+ `sudo apt install poppler-utils`
  - [Tesseract](https://github.com/tesseract-ocr/tesseract)
- ..- `brew install tesseract`
- ..- `sudo apt install tesseract-ocr`
+ 
+ `brew install tesseract`
+ 
+ `sudo apt install tesseract-ocr`
  - [pipenv](https://pipenv.readthedocs.io/en/latest/)
- ..- `pip install pipenv`
+ 
+ `pip install pipenv`
  
 Setup instructions:
  

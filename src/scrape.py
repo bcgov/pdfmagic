@@ -18,10 +18,7 @@ def ocr(pdffile,dirs):
         # run ocr on image
         text += (pytesseract.image_to_string(image,lang='eng'))
         text += ('\n\n')
-    # this is hardcoded but these type of exceptions should be loaded in a config file
-    if 'Public Comment Form' in text:
-        subprocess.run(['mv',pdffile,dirs['forms']])
-    else:
+
         # save text file
         txtfile = dirs['ocr_dir']+'/'+((pdffile.split('/')[-1]).split('.')[0] + '.txt')
         with open(txtfile,'w') as txt:

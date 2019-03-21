@@ -2,8 +2,12 @@
 A common service deployable project to handle conversion of PDF documents to text
 
 ## Developing Locally
+Unfortunately this probably will not run on windows right now.
+
 Dependencies:
 (these should all be in your PATH)
+Brew and Apt packages listed for convenience, follow the links for installation instructions on your system.
+
  - Python 3.7
  - [RabbitMQ](https://www.rabbitmq.com/download.html) 
  

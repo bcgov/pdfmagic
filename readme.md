@@ -9,20 +9,26 @@ Dependencies:
 
 Brew and Apt packages listed for convenience, follow the links for installation instructions on your system.
 
- - Python 3.7
+ - Python 3.7 & Pip
  - [RabbitMQ](https://www.rabbitmq.com/download.html) 
  
  `brew install rabbitmq`
+ 
+ OR
  
  `sudo apt install rabbitmq-server`
  - [Poppler](https://poppler.freedesktop.org/)
  
  `brew install poppler`
  
+ OR
+ 
  `sudo apt install poppler-utils`
  - [Tesseract](https://github.com/tesseract-ocr/tesseract)
  
  `brew install tesseract`
+ 
+ OR
  
  `sudo apt install tesseract-ocr`
  - [pipenv](https://pipenv.readthedocs.io/en/latest/)

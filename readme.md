@@ -1,6 +1,8 @@
 # pdfmagic
 A common service deployable project to handle conversion of PDF documents to text
 
+**Openshift templates will not work on this branch**
+
 ## Developing Locally
 Unfortunately this probably will not run on windows right now.
 

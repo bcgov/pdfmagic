@@ -17,11 +17,22 @@ SID_SIZE = 30
 
 app = flask.Flask(__name__)
 app.secret_key = os.environ['FLASK_SECRET_KEY']
-
-
 app.config.from_envvar('PDFMAGIC_CONFIG')
-celery = Celery(app.name,broker=app.config['CELERY_BROKER_URL'])
+
+celery = Celery(app.name)
 celery.conf.update(app.config)
+celery.conf.update({
+    'broker_url': 'filesystem://',
+    'broker_transport_options': {
+        'data_folder_in': app.config['CELERY_PATH_DATA'],
+        'data_folder_out': app.config['CELERY_PATH_DATA'],
+        'data_folder_processed': app.config['CELERY_PATH_PROCESSED']
+    },
+    'imports': ('tasks',),
+    'result_persistent': False,
+    'task_serializer': 'json',
+    'result_serializer': 'json',
+    'accept_content': ['json']})
 
 ### Returns a boolean value
 ### whether the filename has an allowed extension or not

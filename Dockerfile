@@ -19,8 +19,10 @@ RUN pipenv install --system --deploy --ignore-pipfile
 
 # set up app config
 RUN mkdir -p /pdfmagic/uploads /pdfmagic/output
+RUN mkdir -p /pdfmagic/celery/data /pdfmagic/celery/processed
 RUN chgrp -R 0 /pdfmagic/uploads && chmod -R g+rwx /pdfmagic/uploads
 RUN chgrp -R 0 /pdfmagic/output && chmod -R g+rwx /pdfmagic/output
+RUN chgrp -R 0 /pdfmagic/celery && chmod -R g+rwx /pdfmagic/celery
 
 
 ENV PDFMAGIC_CONFIG /pdfmagic/src/pdfmagic.cfg

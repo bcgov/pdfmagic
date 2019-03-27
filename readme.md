@@ -12,13 +12,7 @@ Dependencies:
 Brew and Apt packages listed for convenience, follow the links for installation instructions on your system.
 
  - Python 3.7 & Pip
- - [RabbitMQ](https://www.rabbitmq.com/download.html) 
- 
- `brew install rabbitmq`
- 
- OR
- 
- `sudo apt install rabbitmq-server`
+
  - [Poppler](https://poppler.freedesktop.org/)
  
  `brew install poppler`
@@ -43,10 +37,6 @@ Install python dependencies
     
     cd src
     pipenv install
-
-Run rabbitmq
-
-    sudo rabbitmq-server
     
 Run celery worker
 

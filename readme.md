@@ -15,18 +15,11 @@ Brew and Apt packages listed for convenience, follow the links for installation 
 
  - [Poppler](https://poppler.freedesktop.org/)
  
- `brew install poppler`
+ `brew install poppler` OR `sudo apt install poppler-utils`
  
- OR
- 
- `sudo apt install poppler-utils`
  - [Tesseract](https://github.com/tesseract-ocr/tesseract)
  
- `brew install tesseract`
- 
- OR
- 
- `sudo apt install tesseract-ocr`
+ `brew install tesseract` OR `sudo apt install tesseract-ocr`
  - [pipenv](https://pipenv.readthedocs.io/en/latest/)
  
  `pip install pipenv`

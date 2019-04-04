@@ -32,7 +32,7 @@ Install python dependencies
 Run celery worker
 
     pipenv shell
-    celery worker -A app.celery --loglevel=info
+    ./local-celery.sh
     
 Run app in another terminal
     

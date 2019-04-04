@@ -70,7 +70,7 @@ def init_dirs(output_dir):
     dirs['noscrape'] = output_dir + '/noscrape'
     dirs['ocr_dir'] = output_dir + '/ocr'
     dirs['img_dir'] = output_dir + '/img'
-    dirs['forms'] = output_dir + '/forms'
+    #dirs['forms'] = output_dir + '/forms'
 
     # make output dir and subdirs
     subprocess.run(['mkdir',output_dir])
@@ -91,13 +91,13 @@ def start(args):
 
     else:
         scrape(args.target,dirs)
+        os.remove(args.target)
 
 
     for pdf in get_pdfs(dirs['noscrape']):
-            ocr(pdf,dirs) 
+            ocr(pdf,dirs)
+            os.remove(pdf)
 
-    
-    
     #remove temp dirs
     subprocess.run(['rm','-r',dirs['noscrape']])
     subprocess.run(['rm','-r',dirs['img_dir']])

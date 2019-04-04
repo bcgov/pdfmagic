@@ -28,7 +28,6 @@ celery.conf.update({
         'data_folder_out': app.config['CELERY_PATH_DATA'],
         'data_folder_processed': app.config['CELERY_PATH_PROCESSED']
     },
-    'imports': ('tasks',),
     'result_persistent': False,
     'task_serializer': 'json',
     'result_serializer': 'json',

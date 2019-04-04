@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Template
 metadata:
-  name: flask-app-deploy
+  name: celery-deploy
 objects:
 - apiVersion: v1
   kind: Service
@@ -64,6 +64,10 @@ objects:
             mountPath: ${PVC_1_MOUNT_PATH}
           - name: ${PVC_2_NAME}
             mountPath: ${PVC_2_MOUNT_PATH}
+          - name: ${PVC_3_NAME}
+            mountPath: ${PVC_3_MOUNT_PATH}
+          - name: ${PVC_4_NAME}
+            mountPath: ${PVC_4_MOUNT_PATH}
         dnsPolicy: ClusterFirst
         restartPolicy: Always
         schedulerName: default-scheduler
@@ -76,6 +80,12 @@ objects:
         - name: ${PVC_2_NAME}
           persistentVolumeClaim:
             claimName: ${PVC_2_NAME}
+        - name: ${PVC_3_NAME}
+          persistentVolumeClaim:
+            claimName: ${PVC_3_NAME}
+        - name: ${PVC_4_NAME}
+          persistentVolumeClaim:
+            claimName: ${PVC_4_NAME}
     test: false
     triggers:
     - type: ConfigChange
@@ -88,39 +98,10 @@ objects:
           name: ${APP_NAME}:latest
           namespace: ${IMAGE_NAMESPACE}
       type: ImageChange
-    
-- kind: Secret
-  type: Opaque
-  apiVersion: v1
-  data: 
-    FLASK_SECRET_KEY: ${FLASK_SECRET_KEY}
-  metadata:
-    name: flask-secret-key
-    namespace: ${PROJECT_NAMESPACE}
-- kind: PersistentVolumeClaim
-  apiVersion: v1
-  metadata:
-    name: ${PVC_1_NAME}
-  spec:
-    accessModes:
-      - ReadWriteMany
-    resources:
-      requests:
-        storage: ${PVC_CAPACITY}
-- kind: PersistentVolumeClaim
-  apiVersion: v1
-  metadata:
-    name: ${PVC_2_NAME}
-  spec:
-    accessModes:
-      - ReadWriteMany
-    resources:
-      requests:
-        storage: ${PVC_CAPACITY}
 parameters:
 - name: APP_NAME
   description: The name of the application
-  value: pdfmagic
+  value: celery
   required: true
 - name: PROJECT_NAMESPACE
   description: The namespace where the project will be deployed
@@ -143,6 +124,14 @@ parameters:
   description: Name of persistent volume claim
   value: pdfmagic-output
   required: true
+- name: PVC_3_NAME
+  description: Name of persistent volume claim
+  value: celery-data
+  required: true
+- name: PVC_4_NAME
+  description: Name of persistent volume claim
+  value: celery-processed
+  required: true
 - name: PVC_1_MOUNT_PATH
   description: Where the PVC will be mounted inside container
   value: "/pdfmagic/uploads"
@@ -151,8 +140,12 @@ parameters:
   description: Where the PVC will be mounted inside container
   value: "/pdfmagic/output"
   required: true
-- name: PVC_CAPACITY
-  description: size of storage allocated to PVC
-  value: 1Gi
+- name: PVC_3_MOUNT_PATH
+  description: Where the PVC will be mounted inside container
+  value: "/pdfmagic/celery/data"
+  required: true
+- name: PVC_4_MOUNT_PATH
+  description: Where the PVC will be mounted inside container
+  value: "/pdfmagic/celery/processed"
   required: true
   

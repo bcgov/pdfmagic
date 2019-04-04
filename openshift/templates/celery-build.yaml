@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Template
 metadata:
-  name: flask-app-build
+  name: celery-build
 objects:
 - apiVersion: build.openshift.io/v1
   kind: BuildConfig
@@ -27,6 +27,7 @@ objects:
       type: Git
     strategy:
       dockerStrategy:
+        dockerfilePath: ${DOCKERFILE_PATH}
         from:
           kind: ImageStreamTag
           name: python:3.7
@@ -51,30 +52,10 @@ objects:
       build: ${APP_NAME}
     name: ${APP_NAME}
     namespace: ${IMAGE_NAMESPACE}
-
-- apiVersion: image.openshift.io/v1
-  kind: ImageStream
-  metadata:
-    labels:
-      build: ${APP_NAME}
-    name: python
-    namespace: ${IMAGE_NAMESPACE}
-  spec:
-    lookupPolicy:
-      local: false
-    tags:
-      - annotations:
-          openshift.io/imported-from: 'python:3.7'
-        from:
-          kind: DockerImage
-          name: 'python:3.7'
-        name: '3.7'
-        referencePolicy:
-          type: Source
 parameters:
 - name: APP_NAME
   description: The name of the application
-  value: pdfmagic
+  value: celery
   required: true
 - name: IMAGE_NAMESPACE
   description: The namespace containing the build image
@@ -97,4 +78,8 @@ parameters:
 - name: GIT_BRANCH
   description: git branch to use
   value: master
+  required: true
+- name: DOCKERFILE_PATH
+  description: path to Dockerfile in the repo
+  value: celery/Dockerfile
   required: true

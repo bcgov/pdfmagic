@@ -29,6 +29,12 @@ Install python dependencies
     cd src
     pipenv install
     
+Make a data directory and run the one-time init script
+(only do this the first time setting up, the directory can be named anything)
+
+    mkdir ~/pdfmagic_data
+    ./local-init.sh ~/pdfmagic_data
+    
 Run celery worker
 
     pipenv shell
@@ -37,4 +43,4 @@ Run celery worker
 Run app in another terminal
     
     pipenv shell
-    ./local.sh
+    ./local-flask.sh

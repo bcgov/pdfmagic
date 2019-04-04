@@ -1,0 +1,2 @@
+rm -r pdf_upload/*
+rm -r pdf_output/*

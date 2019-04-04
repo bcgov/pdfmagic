@@ -1,0 +1,151 @@
+apiVersion: v1
+kind: Template
+metadata:
+  name: celery-deploy
+objects:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      app: ${APP_NAME}
+    name: ${APP_NAME}
+    namespace: ${PROJECT_NAMESPACE}
+  spec:
+    ports:
+    - name: 5000-tcp
+      port: 5000
+      protocol: TCP
+      targetPort: 5000
+    selector:
+      deploymentconfig: ${APP_NAME}
+- apiVersion: apps.openshift.io/v1
+  kind: DeploymentConfig
+  metadata:
+    generation: 10
+    labels:
+      app: ${APP_NAME}
+    name: ${APP_NAME}
+    namespace: ${PROJECT_NAMESPACE}
+  spec:
+    replicas: 1
+    selector:
+      app: ${APP_NAME}
+      deploymentconfig: ${APP_NAME}
+    strategy:
+      activeDeadlineSeconds: 21600
+      resources: {}
+      rollingParams:
+        intervalSeconds: 1
+        maxSurge: 25%
+        maxUnavailable: 25%
+        timeoutSeconds: 600
+        updatePeriodSeconds: 1
+      type: Rolling
+    template:
+      metadata:
+        labels:
+          app: ${APP_NAME}
+          deploymentconfig: ${APP_NAME}
+      spec:
+        containers:
+        - envFrom:
+          - secretRef:
+              name: flask-secret-key
+          imagePullPolicy: Always
+          name: ${APP_NAME}
+          ports:
+          - containerPort: 5000
+            protocol: TCP
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - name: ${PVC_1_NAME}
+            mountPath: ${PVC_1_MOUNT_PATH}
+          - name: ${PVC_2_NAME}
+            mountPath: ${PVC_2_MOUNT_PATH}
+          - name: ${PVC_3_NAME}
+            mountPath: ${PVC_3_MOUNT_PATH}
+          - name: ${PVC_4_NAME}
+            mountPath: ${PVC_4_MOUNT_PATH}
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - name: ${PVC_1_NAME}
+          persistentVolumeClaim:
+            claimName: ${PVC_1_NAME}
+        - name: ${PVC_2_NAME}
+          persistentVolumeClaim:
+            claimName: ${PVC_2_NAME}
+        - name: ${PVC_3_NAME}
+          persistentVolumeClaim:
+            claimName: ${PVC_3_NAME}
+        - name: ${PVC_4_NAME}
+          persistentVolumeClaim:
+            claimName: ${PVC_4_NAME}
+    test: false
+    triggers:
+    - type: ConfigChange
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - ${APP_NAME}
+        from:
+          kind: ImageStreamTag
+          name: ${APP_NAME}:latest
+          namespace: ${IMAGE_NAMESPACE}
+      type: ImageChange
+parameters:
+- name: APP_NAME
+  description: The name of the application
+  value: celery
+  required: true
+- name: PROJECT_NAMESPACE
+  description: The namespace where the project will be deployed
+  value: pdfmagic-dev
+  required: true
+- name: IMAGE_NAMESPACE
+  description: The namespace containing the build image
+  value: pdfmagic-tools
+  required: true
+- name: FLASK_SECRET_KEY
+  description: secret key used to sign flask sessions
+  generate: expression
+  from: "[a-zA-Z0-9]{128}"
+  required: true
+- name: PVC_1_NAME
+  description: Name of persistent volume claim
+  value: pdfmagic-uploads
+  required: true
+- name: PVC_2_NAME
+  description: Name of persistent volume claim
+  value: pdfmagic-output
+  required: true
+- name: PVC_3_NAME
+  description: Name of persistent volume claim
+  value: celery-data
+  required: true
+- name: PVC_4_NAME
+  description: Name of persistent volume claim
+  value: celery-processed
+  required: true
+- name: PVC_1_MOUNT_PATH
+  description: Where the PVC will be mounted inside container
+  value: "/pdfmagic/uploads"
+  required: true
+- name: PVC_2_MOUNT_PATH
+  description: Where the PVC will be mounted inside container
+  value: "/pdfmagic/output"
+  required: true
+- name: PVC_3_MOUNT_PATH
+  description: Where the PVC will be mounted inside container
+  value: "/pdfmagic/celery/data"
+  required: true
+- name: PVC_4_MOUNT_PATH
+  description: Where the PVC will be mounted inside container
+  value: "/pdfmagic/celery/processed"
+  required: true
+  

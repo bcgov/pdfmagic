@@ -3,14 +3,15 @@ import subprocess
 import glob
 import pdf2image
 import pytesseract
+import os
 
 OUTPUT_FOLDER_DEFAULT = "pdf_output"
 
 #todo: make this more cross-platform?
-#todo: make the single-upload experience better
 
 ### Extract text from a pdf file using Tesseract OCR
 def ocr(pdffile,dirs):
+    txtfile = dirs['ocr_dir']+'/'+((pdffile.split('/')[-1]).split('.')[0] + '.txt.tmp')
     # convert pdfs to images
     images = pdf2image.convert_from_path(pdffile,output_folder=dirs['img_dir'])
     text = ""
@@ -18,14 +19,11 @@ def ocr(pdffile,dirs):
         # run ocr on image
         text += (pytesseract.image_to_string(image,lang='eng'))
         text += ('\n\n')
-    # this is hardcoded but these type of exceptions should be loaded in a config file
-    if 'Public Comment Form' in text:
-        subprocess.run(['mv',pdffile,dirs['forms']])
-    else:
+
         # save text file
-        txtfile = dirs['ocr_dir']+'/'+((pdffile.split('/')[-1]).split('.')[0] + '.txt')
         with open(txtfile,'w') as txt:
             txt.write(text)
+    os.rename(txtfile,txtfile[:-4])
 
 ### Scrape text from a pdf using pdftotext from Poppler
 def scrape(pdffile,dirs):
@@ -72,7 +70,7 @@ def init_dirs(output_dir):
     dirs['noscrape'] = output_dir + '/noscrape'
     dirs['ocr_dir'] = output_dir + '/ocr'
     dirs['img_dir'] = output_dir + '/img'
-    dirs['forms'] = output_dir + '/forms'
+    #dirs['forms'] = output_dir + '/forms'
 
     # make output dir and subdirs
     subprocess.run(['mkdir',output_dir])
@@ -87,16 +85,19 @@ def start(args):
 
     if args.batch:
         for pdf in get_pdfs(args.target):
-            if pdf: scrape(pdf,dirs)
+            if pdf: 
+                scrape(pdf,dirs)
+                os.remove(pdf)
+
     else:
         scrape(args.target,dirs)
+        os.remove(args.target)
 
 
     for pdf in get_pdfs(dirs['noscrape']):
-            ocr(pdf,dirs) 
+            ocr(pdf,dirs)
+            os.remove(pdf)
 
-    
-    
     #remove temp dirs
     subprocess.run(['rm','-r',dirs['noscrape']])
     subprocess.run(['rm','-r',dirs['img_dir']])

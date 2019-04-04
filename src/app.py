@@ -7,34 +7,47 @@ from datetime import datetime as dt
 import string
 import base64
 import glob
+from celery import Celery
+from keywords import extract_keywords
 
 import scrape
-
 ALLOWED_EXTENSIONS = set(['pdf'])
 SID_SIZE = 30
 
 
 app = flask.Flask(__name__)
 app.secret_key = os.environ['FLASK_SECRET_KEY']
-
-
 app.config.from_envvar('PDFMAGIC_CONFIG')
+
+celery = Celery(app.name)
+celery.conf.update(app.config)
+celery.conf.update({
+    'broker_url': 'filesystem://',
+    'broker_transport_options': {
+        'data_folder_in': app.config['CELERY_PATH_DATA'],
+        'data_folder_out': app.config['CELERY_PATH_DATA'],
+        'data_folder_processed': app.config['CELERY_PATH_PROCESSED']
+    },
+    'result_persistent': False,
+    'task_serializer': 'json',
+    'result_serializer': 'json',
+    'accept_content': ['json']})
 
 ### Returns a boolean value
 ### whether the filename has an allowed extension or not
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.',1)[1].lower() in ALLOWED_EXTENSIONS
 
-### todo: create a workflow for single upload
+### todo: remove batch upload stuff
 ### Run the scraper on a folder
 ### sid is used to uniquely identify this session's files
-def batch_scrape(sid):
-    scrape.run(os.path.join(app.config['UPLOAD_FOLDER'],sid),batch=True,output=os.path.join(app.config['SCRAPE_OUTPUT_FOLDER'],sid))
-    zip_files(sid)
+def batch_scrape(session):
+    scrape.run(os.path.join(app.config['UPLOAD_FOLDER'],session['sid']),batch=True,output=os.path.join(app.config['SCRAPE_OUTPUT_FOLDER'],session['sid']))
+    zip_files(session['sid'])
     print("BATCH DONE",file=sys.stderr)
 
-def single_scrape(sid):
-    scrape.run(os.path.join(os.path.join(app.config['UPLOAD_FOLDER'],sid,flask.session['filename'])),batch=False,output=os.path.join(app.config['SCRAPE_OUTPUT_FOLDER'],sid))
+def single_scrape(session):
+    scrape.run(os.path.join(os.path.join(app.config['UPLOAD_FOLDER'],session['sid'],session['filename'])),batch=False,output=os.path.join(app.config['SCRAPE_OUTPUT_FOLDER'],session['sid']))
     print("DONE",file=sys.stderr)
 
 ### zip the output dir of the scraper
@@ -47,6 +60,10 @@ def zip_files(sid):
 ### Generate a random session id string
 def generate_sid():
     return base64.b64encode(os.urandom(24)).decode().replace('/','0')
+
+### Get the path to output .txt file
+def get_txt(sid):
+    return glob.glob(os.path.join(app.config['SCRAPE_OUTPUT_FOLDER'],sid,'*','*.txt'))[0]
 
 ### Save a file to disk if it matches allowed filetypes
 ### return false if file not allowed, true otherwise
@@ -62,51 +79,71 @@ def save_file(_file,upload_folder):
         return False
     
 
-### Main route, displays upload page on GET
 ### Handles .pdf upload on POST
-@app.route('/',methods=['GET','POST'])
-def uploader():
+@app.route('/upload/',methods=['POST'])
+def upload():
     req = flask.request
 
-    ### POST requests should be file uploads
-    if req.method == 'POST':
-        #generate session id
-        sid = generate_sid()
-        flask.session['sid'] = sid
+    #generate session id
+    sid = generate_sid()
+    flask.session['sid'] = sid
 
-        if 'file[]' not in req.files:
-            flask.flash('No file part')
-            return flask.redirect(req.url)    
-        uploaded_files=req.files.getlist("file[]")
-        print("FILES",file=sys.stderr)
-        print(uploaded_files,file=sys.stderr)
+    if 'file[]' not in req.files:
+        flask.flash('No file part')
+        return flask.redirect(req.url)    
+    uploaded_files=req.files.getlist("file[]")
+    print("FILES",file=sys.stderr)
+    print(uploaded_files,file=sys.stderr)
 
-        # is a batch job if there is more than one file
-        flask.session['batch'] = len(uploaded_files) > 1
+    # is a batch job if there is more than one file
+    flask.session['batch'] = len(uploaded_files) > 1
+    
+    # process filenames, and save files
+    upload_folder = os.path.join(app.config['UPLOAD_FOLDER'],sid)
+    os.mkdir(upload_folder)
+    for _file in uploaded_files:
+        if not _file: continue
+        save_file(_file,upload_folder)
+        # flask.render_template('pdfmagic.html')
+
+    # .delay() is the celery way to call a task
+    process_upload.delay(dict(flask.session))
+    
+    return req.host_url + 'download/'
+
+@app.route('/extract-keywords/',methods=['POST'])
+def upload_keywords():
+    req = flask.request
+    flask.session['keywords'] = [s.strip() for s in req.form['keywords'].split(',')]
+    
+    for arg in ('snippets','text'):
+        flask.session[arg] = (arg in req.args) and req.args[arg].lower() == 'true'
+
+    upload()
+    return req.host_url + 'retrieve-keywords/'
+
+@celery.task
+def process_upload(session):
+    print("START PROCESSING",file=sys.stderr)
+    #run the scraper
+    if session['batch']:
+        batch_scrape(session)
+    else:
+        single_scrape(session)
+
+    #if 'keywords' in session:
         
 
-        # process filenames, and save files
-        upload_folder = os.path.join(app.config['UPLOAD_FOLDER'],sid)
-        os.mkdir(upload_folder)
-        for _file in uploaded_files:
-            if not _file: continue
-            save_file(_file,upload_folder)
-            flask.render_template('pdfmagic.html')
+@app.route('/retrieve-keywords/')
+def retrieve_keywords():
+    try:
+        txtfile = glob.glob(os.path.join(app.config['SCRAPE_OUTPUT_FOLDER'],flask.session['sid'],'*','*.txt'))[0]
+        results = extract_keywords(txtfile,dict(flask.session))
+    except Exception as e:
+        return "PDFMAGIC_ERROR: This item is not currently available"
+    return flask.jsonify(results)
 
-        #run the scraper
-        if flask.session['batch']:
-            batch_scrape(sid)
-        else:
-            single_scrape(sid)
-        
-        if  'no_html' in req.form:
-            return req.base_url + 'download/'
-            
-        return flask.render_template('downloads.html')
-
-    return flask.render_template('pdfmagic.html')
-
-### User can download output zip with a GET
+### User can download output with a GET
 @app.route('/download/')
 def download():
     try:
@@ -115,11 +152,10 @@ def download():
         if flask.session['batch']:
             return flask.send_file(os.path.join(app.config['SCRAPE_OUTPUT_FOLDER'],sid+'.zip'),as_attachment=True,attachment_filename='pdfmagic-{}.zip'.format(tstamp))
         else:
-            try:
-                txtfile = glob.glob(os.path.join(app.config['SCRAPE_OUTPUT_FOLDER'],sid,'*','*.txt'))[0]
-                return flask.send_file(txtfile,as_attachment=True,attachment_filename=flask.session['filename'][:-3]+'.txt')
-            except Exception as e:
-                return str(e)
+            txtfile = get_txt(sid)
+            return flask.send_file(txtfile,as_attachment=True,attachment_filename=flask.session['filename'][:-3]+'.txt')
+    except IndexError:
+        return "PDFMAGIC_ERROR: This item is not currently available"
     except Exception as e:
         return str(e)
 

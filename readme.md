@@ -48,6 +48,7 @@ Run app in another terminal
 ## Usage
 
 For testing the API I recommend using [Postman](https://www.getpostman.com/)
+
 There are a few API endpoints available currently:
 
 ### POST

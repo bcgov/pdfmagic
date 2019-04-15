@@ -44,3 +44,36 @@ Run app in another terminal
     
     pipenv shell
     ./local-flask.sh
+
+## Usage
+
+There are a few API endpoints available currently:
+
+### POST
+
+`/extract-keywords/` or `/upload/`
+
+Both of these expect a file in the request form-data with key `file[]` 
+
+`/extract-keywords/` also accepts comma separated case-insensitive keywords in the request form-data with key `keywords`. If the optional `snippets` parameter is set to `true` then it will attempt to return small snippets of text relevant to keywords. This feature does not work well
+
+eg:
+
+    curl -X POST \
+      http://localhost:5000/extract-keywords/?snippets=false \
+      -H 'cache-control: no-cache' \
+      -H 'content-type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW' \
+      -F 'file[]=@/path/to/file.pdf' \
+      -F 'keywords=Just, Some, keywords'
+ 
+ ### GET
+ 
+ `/retrieve-keywords/` : returns json with the counts of the keywords
+ 
+ `/download/` : returns txt of the pdf
+ 
+ Both of these can be used after a `/extract-keywords/` but only `/download/` should be used after an `/upload/`
+ 
+ There is a cookie returned from the POST which needs to be given in order to retrieve any data from the server.
+ 
+ For testing the API I recommend using [Postman](https://www.getpostman.com/)

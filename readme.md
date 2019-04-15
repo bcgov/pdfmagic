@@ -47,6 +47,7 @@ Run app in another terminal
 
 ## Usage
 
+For testing the API I recommend using [Postman](https://www.getpostman.com/)
 There are a few API endpoints available currently:
 
 ### POST
@@ -76,4 +77,3 @@ eg:
  
  There is a cookie returned from the POST which needs to be given in order to retrieve any data from the server.
  
- For testing the API I recommend using [Postman](https://www.getpostman.com/)

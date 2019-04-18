@@ -78,3 +78,13 @@ eg:
  
  There is a cookie returned from the POST which needs to be given in order to retrieve any data from the server.
  
+## Openshift
+There are build and deploy configs in `/openshift/templates`
+
+They can be copy pasted into the openshift web console.
+
+Its important to deploy the Flask before the Celery
+
+There needs to be at least one container of each running.
+
+I don't know how this scales or if this is the right configuration, I would look into putting both containers in one pod down the road perhaps.
